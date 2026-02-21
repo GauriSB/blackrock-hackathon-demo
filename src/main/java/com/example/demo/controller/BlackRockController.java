@@ -2,12 +2,11 @@ package com.example.demo.controller;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.web.bind.annotation.GetMapping; // Don't forget this import
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping; // Don't forget this import
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,13 +31,12 @@ public class BlackRockController {
         return expenses.stream().map(financeService::parseAndRound).toList();
     }
 
-// Change this line:
-@PostMapping("/transactions:filter")
-public List<Map<String, Object>> filter(@RequestBody FilterRequest request) {
-    return financeService.filterTransactions(request);
-}
 
-    // ADD THIS TO FIX 404 ON PERFORMANCE
+    @PostMapping("/transactions:filter")
+    public List<Map<String, Object>> filter(@RequestBody FilterRequest request) {
+        return financeService.filterTransactions(request);
+    }
+
     @GetMapping("/performance")
     public Map<String, Object> performance() {
         Map<String, Object> metrics = new HashMap<>();
@@ -48,23 +46,14 @@ public List<Map<String, Object>> filter(@RequestBody FilterRequest request) {
         return metrics;
     }
 
-    // ADD THIS TO FIX 404 ON RETURNS:CALCULATE
     @PostMapping("/returns:calculate")
     public Map<String, Object> calculateReturns(@RequestBody Map<String, Object> input) {
+        // 1. Extract and Parse Data
         double totalInvested = Double.parseDouble(input.get("totalInvested").toString());
         int age = Integer.parseInt(input.get("age").toString());
         double wage = Double.parseDouble(input.get("wage").toString());
-        double inflation = 0.055;
 
-        double npsFinal = financeService.calculateRealValue(totalInvested, 0.0711, age, inflation);
-        double taxBenefit = financeService.calculateTaxBenefit(wage * 12, totalInvested);
-        double indexFinal = financeService.calculateRealValue(totalInvested, 0.1449, age, inflation);
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("nps_real_value", String.format("%.2f", npsFinal));
-        response.put("nps_tax_benefit", String.format("%.2f", taxBenefit));
-        response.put("index_fund_real_value", String.format("%.2f", indexFinal));
-        
-        return response;
+        // 2. Delegate to Service (The logic shift)
+        return financeService.getProjectedReturns(totalInvested, age, wage);
     }
 }

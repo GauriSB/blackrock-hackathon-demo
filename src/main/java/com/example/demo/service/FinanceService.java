@@ -18,6 +18,7 @@ import com.example.demo.model.Transaction;
 public class FinanceService {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+//calc remanent and ceiling for each transaction
     public Transaction parseAndRound(Expense expense) {
         Transaction t = new Transaction();
         t.setDate(expense.getDate());
@@ -29,7 +30,8 @@ public class FinanceService {
         return t;
     }
 
-    // Fix for the 404/Empty response: This now handles the K periods
+// Process transactions based on Q and P rules for each K period
+
     public List<Map<String, Object>> filterTransactions(FilterRequest request) {
         List<Map<String, Object>> finalResults = new ArrayList<>();
         
@@ -99,4 +101,20 @@ public class FinanceService {
         LocalDateTime end = LocalDateTime.parse(period.getEnd(), formatter);
         return !date.isBefore(start) && !date.isAfter(end);
     }
+
+    public Map<String, Object> getProjectedReturns(double totalInvested, int age, double wage) {
+    double inflation = 0.055; // Challenge constant
+
+    // Use the existing math methods we already fixed
+    double npsFinal = calculateRealValue(totalInvested, 0.0711, age, inflation);
+    double indexFinal = calculateRealValue(totalInvested, 0.1449, age, inflation);
+    double taxBenefit = calculateTaxBenefit(wage * 12, totalInvested);
+
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("nps_real_value", String.format("%.2f", npsFinal));
+    response.put("nps_tax_benefit", String.format("%.2f", taxBenefit));
+    response.put("index_fund_real_value", String.format("%.2f", indexFinal));
+    
+    return response;
+}
 }
